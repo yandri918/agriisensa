@@ -1,0 +1,14 @@
+# Struktur tabel SQLite
+CREATE TABLE historical_data (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tanggal DATE,
+    pH REAL,
+    N_mg_kg INTEGER,
+    P_mg_kg INTEGER,
+    K_persen REAL,
+    hasil_kg REAL,
+    cuaca TEXT,
+    musim TEXT,
+    jenis_tanaman TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
