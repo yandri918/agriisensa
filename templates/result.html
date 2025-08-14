@@ -10,6 +10,7 @@
         .rekomendasi { background: #fff3e0; padding: 15px; border-left: 5px solid #ef6c00; }
         a { color: #1b5e20; text-decoration: none; font-weight: bold; }
         a:hover { text-decoration: underline; }
+        .info { background: #e3f2fd; padding: 15px; border-left: 5px solid #2196f3; }
     </style>
 </head>
 <body>
@@ -20,6 +21,15 @@
         <div class="result">
             <p><strong>📈 Prediksi Hasil Panen:</strong> {{ hasil }} kg</p>
             <p><strong>🌱 Status Tanah:</strong> {{ status }}</p>
+            <p><strong>🌤️ Cuaca:</strong> {{ cuaca }}</p>
+            <p><strong>🌧️ Musim:</strong> {{ musim }}</p>
+            <p><strong>🌱 Jenis Tanaman:</strong> {{ jenis_tanaman }}</p>
+        </div>
+
+        <div class="info">
+            <p><strong>📝 Informasi Prediksi:</strong></p>
+            <p>Model ML: {{ model_used }}</p>
+            <p>Tanggal Prediksi: {{ tanggal }}</p>
         </div>
 
         <div class="rekomendasi">
