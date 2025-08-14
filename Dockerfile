@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir \
     numpy==1.21.0 \
     pandas==1.5.3 \
     Flask==2.3.3 \
-    gunicorn==20.1.0
+    gunicorn==20.1.0 \
+    joblib==1.3.2
 
 # Copy kode aplikasi
 COPY . .
