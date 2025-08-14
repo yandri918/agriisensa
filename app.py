@@ -105,6 +105,8 @@ def predict():
         
         # Prediksi hasil panen
         hasil = 0
+        model_used = "Fallback (Sederhana)"
+        
         if predictor:
             try:
                 # Encode cuaca dan musim
@@ -117,6 +119,7 @@ def predict():
                 # Prediksi
                 prediction = predictor.predict([[pH, n, p, k, cuaca_encoded, musim_encoded]])
                 hasil = prediction[0]
+                model_used = "Machine Learning (ML)"
             except Exception as e:
                 print(f"❌ Error prediksi ML: {e}")
                 # Fallback jika error prediksi ML
@@ -162,7 +165,9 @@ def predict():
                                rekomendasi=rekomendasi,
                                cuaca=cuaca,
                                musim=musim,
-                               jenis_tanaman=jenis_tanaman)
+                               jenis_tanaman=jenis_tanaman,
+                               model_used=model_used,
+                               tanggal=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     except Exception as e:
         return f"<h3>Error: {str(e)}</h3><br><a href='/'>Kembali</a>"
 
