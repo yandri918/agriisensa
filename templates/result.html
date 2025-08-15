@@ -8,9 +8,10 @@
         h1 { color: #2e7d32; }
         .result { background: #f1f8e9; padding: 15px; border-left: 5px solid #689f38; margin: 20px 0; }
         .rekomendasi { background: #fff3e0; padding: 15px; border-left: 5px solid #ef6c00; }
+        .analysis { background: #e3f2fd; padding: 15px; border-left: 5px solid #2196f3; }
         a { color: #1b5e20; text-decoration: none; font-weight: bold; }
         a:hover { text-decoration: underline; }
-        .info { background: #e3f2fd; padding: 15px; border-left: 5px solid #2196f3; }
+        .image-preview { max-width: 200px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -24,13 +25,31 @@
             <p><strong>🌤️ Cuaca:</strong> {{ cuaca }}</p>
             <p><strong>🌧️ Musim:</strong> {{ musim }}</p>
             <p><strong>🌱 Jenis Tanaman:</strong> {{ jenis_tanaman }}</p>
+            <p><strong>🤖 Model:</strong> {{ model_used }}</p>
         </div>
 
-        <div class="info">
-            <p><strong>📝 Informasi Prediksi:</strong></p>
-            <p>Model ML: {{ model_used }}</p>
-            <p>Tanggal Prediksi: {{ tanggal }}</p>
+        {% if leaf_analysis %}
+        <div class="analysis">
+            <h3>🔍 Analisis Daun</h3>
+            <p><strong>Warna Daun:</strong> {{ leaf_analysis.color_analysis }}</p>
+            {% if leaf_analysis.image_path %}
+            <p><strong>Gambar Daun:</strong></p>
+            <img src="/uploads/{{ leaf_analysis.image_path }}" alt="Gambar Daun" class="image-preview">
+            {% endif %}
         </div>
+        {% endif %}
+
+        {% if disease_result %}
+        <div class="analysis">
+            <h3>🩺 Deteksi Penyakit</h3>
+            {% if disease_result.error %}
+            <p><strong>Error:</strong> {{ disease_result.error }}</p>
+            {% else %}
+            <p><strong>Penyakit Terdeteksi:</strong> {{ disease_result.disease }}</p>
+            <p><strong>Confidence:</strong> {{ "%.2f"|format(disease_result.confidence * 100) }}%</p>
+            {% endif %}
+        </div>
+        {% endif %}
 
         <div class="rekomendasi">
             <p><strong>💡 Rekomendasi:</strong></p>
