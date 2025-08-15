@@ -1,10 +1,10 @@
+import os
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
-
 class DiseaseClassifier:
     def __init__(self, model_path='models/leaf_disease_model.h5'):
         self.model_path = model_path
