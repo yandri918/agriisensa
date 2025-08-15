@@ -30,6 +30,7 @@ RUN pip install --no-cache-dir \
     opencv-python-headless==4.8.1.78 \
     tensorflow==2.13.0 \
     keras==2.13.1 \
+    scikit-learn==1.3.0 \
     Pillow==10.0.1
 
 # Copy kode aplikasi
