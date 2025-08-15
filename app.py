@@ -1,8 +1,14 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import joblib
 import os
 from datetime import datetime
+import cv2
+import numpy as np
+
+# Import CV modules
+from cv_analysis.leaf_analyzer import LeafAnalyzer
+from cv_analysis.disease_classifier import DiseaseClassifier
 
 app = Flask(__name__)
 
@@ -15,10 +21,14 @@ try:
         predictor = joblib.load(model_path)
         print("✅ Model berhasil dimuat")
     else:
-        print("⚠️  File model tidak ditemukan, menggunakan fallback")
+        print("⚠️ File model tidak ditemukan")
 except Exception as e:
     print(f"❌ Error memuat model: {e}")
     predictor = None
+
+# Inisialisasi CV analyzer
+leaf_analyzer = LeafAnalyzer()
+disease_classifier = DiseaseClassifier()
 
 # Database handler
 class HistoricalDataManager:
@@ -90,7 +100,7 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Ambil input dari form dengan default values
+        # Ambil input dari form
         pH = float(request.form.get('ph', 0))
         n = float(request.form.get('n', 0))
         p = float(request.form.get('p', 0))
@@ -99,9 +109,31 @@ def predict():
         musim = request.form.get('musim', 'kemarau')
         jenis_tanaman = request.form.get('jenis_tanaman', 'cabai')
         
-        # Validasi input
-        if pH < 0 or n < 0 or p < 0 or k < 0:
-            return "<h3>Error: Nilai tidak boleh negatif</h3><br><a href='/'>Kembali</a>"
+        # Upload gambar jika ada
+        leaf_analysis = {}
+        disease_result = {}
+        
+        if 'leaf_image' in request.files:
+            file = request.files['leaf_image']
+            if file and file.filename:
+                # Simpan gambar
+                upload_folder = 'uploads'
+                if not os.path.exists(upload_folder):
+                    os.makedirs(upload_folder)
+                
+                filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+                file_path = os.path.join(upload_folder, filename)
+                file.save(file_path)
+                
+                # Analisis warna daun
+                leaf_status = leaf_analyzer.analyze_leaf_color(file_path)
+                leaf_analysis = {
+                    "color_analysis": leaf_status,
+                    "image_path": filename
+                }
+                
+                # Prediksi penyakit
+                disease_result = disease_classifier.predict_disease(file_path)
         
         # Prediksi hasil panen
         hasil = 0
@@ -122,10 +154,8 @@ def predict():
                 model_used = "Machine Learning (ML)"
             except Exception as e:
                 print(f"❌ Error prediksi ML: {e}")
-                # Fallback jika error prediksi ML
                 hasil = 3.8 if pH < 5.5 else 4.8
         else:
-            # Fallback sederhana jika model tidak tersedia
             hasil = 3.8 if pH < 5.5 else 4.8
         
         # Rekomendasi
@@ -167,7 +197,9 @@ def predict():
                                musim=musim,
                                jenis_tanaman=jenis_tanaman,
                                model_used=model_used,
-                               tanggal=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                               tanggal=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                               leaf_analysis=leaf_analysis,
+                               disease_result=disease_result)
     except Exception as e:
         return f"<h3>Error: {str(e)}</h3><br><a href='/'>Kembali</a>"
 
