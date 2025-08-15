@@ -4,7 +4,6 @@
     <title>Peta Interaktif - AgriSensa</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -74,6 +73,8 @@
             color: #2e7d32;
         }
     </style>
+    <!-- Load Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCa0kAvfLEzmMwKxfLx7hhyEWfruqG0VRs&libraries=places"></script>
 </head>
 <body>
     <div class="container">
@@ -113,7 +114,6 @@
         <p><a href="/">← Kembali ke Home</a></p>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map;
         let markers = [];
@@ -124,48 +124,65 @@
             // Inisialisasi peta di Indonesia
             const indonesia = { lat: -2.5, lng: 118.0 };
             
-            map = L.map('map').setView(indonesia, 5);
-
-            // Tambahkan tile layer gratis
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 5,
+                center: indonesia,
+                mapTypeId: 'hybrid'
+            });
 
             // Tambahkan event click untuk menambahkan marker
-            map.on('click', function(event) {
-                addMarker(event.latlng);
+            map.addListener('click', function(event) {
+                addMarker(event.latLng);
             });
         }
 
         function addMarker(location) {
             // Hapus polygon sebelumnya
             if (polygon) {
-                map.removeLayer(polygon);
+                polygon.setMap(null);
             }
 
             // Tambahkan marker
-            const marker = L.marker(location).addTo(map);
+            const marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                draggable: true
+            });
+
             markers.push(marker);
             coordinates.push({
-                lat: location.lat,
-                lng: location.lng
+                lat: location.lat(),
+                lng: location.lng()
             });
 
             updateCoordinateList();
             updatePolygon();
+            
+            // Tambahkan event drag untuk marker
+            marker.addListener('dragend', function(event) {
+                const index = markers.indexOf(marker);
+                if (index !== -1) {
+                    coordinates[index] = {
+                        lat: event.latLng.lat(),
+                        lng: event.latLng.lng()
+                    };
+                    updateCoordinateList();
+                    updatePolygon();
+                }
+            });
         }
 
         function clearMarkers() {
             // Hapus semua marker
             for (let i = 0; i < markers.length; i++) {
-                map.removeLayer(markers[i]);
+                markers[i].setMap(null);
             }
             markers = [];
             coordinates = [];
             
             // Hapus polygon
             if (polygon) {
-                map.removeLayer(polygon);
+                polygon.setMap(null);
             }
             
             updateCoordinateList();
@@ -194,24 +211,32 @@
         function updatePolygon() {
             if (coordinates.length < 3) {
                 if (polygon) {
-                    map.removeLayer(polygon);
+                    polygon.setMap(null);
                 }
                 return;
             }
 
             // Hapus polygon lama
             if (polygon) {
-                map.removeLayer(polygon);
+                polygon.setMap(null);
             }
 
             // Buat polygon baru
-            const latlngs = coordinates.map(coord => [coord.lat, coord.lng]);
+            const path = coordinates.map(coord => ({
+                lat: coord.lat,
+                lng: coord.lng
+            }));
 
-            polygon = L.polygon(latlngs, {
-                color: '#FF0000',
+            polygon = new google.maps.Polygon({
+                paths: path,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
                 fillColor: '#FF0000',
                 fillOpacity: 0.35
-            }).addTo(map);
+            });
+
+            polygon.setMap(map);
         }
 
         function calculateArea() {
