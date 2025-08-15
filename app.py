@@ -1,3 +1,36 @@
+# Tambahkan route baru untuk peta interaktif
+@app.route('/map-calculator')
+def map_calculator():
+    return render_template('map_calculator.html')
+
+@app.route('/process-map-coordinates', methods=['POST'])
+def process_map_coordinates():
+    try:
+        coordinates_str = request.form.get('coordinates', '')
+        
+        if coordinates_str:
+            # Parse koordinat dari string
+            coords = []
+            pairs = coordinates_str.split(';')
+            for pair in pairs:
+                if ',' in pair:
+                    lat, lon = pair.split(',')
+                    coords.append((float(lat.strip()), float(lon.strip())))
+            
+            if len(coords) >= 3:
+                # Hitung luas menggunakan fungsi yang sudah ada
+                area = AreaCalculator.calculate_polygon_area(coords)
+                area_hectare = round(area, 2)
+                
+                # Simpan ke database atau kirim ke frontend
+                return f"Koordinat diterima. Luas: {area_hectare} hektar"
+            else:
+                return "Koordinat tidak cukup untuk menghitung luas"
+        else:
+            return "Tidak ada koordinat yang diterima"
+            
+    except Exception as e:
+        return f"Error: {str(e)}"
 import os
 import sys
 import io
