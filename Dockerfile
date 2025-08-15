@@ -22,7 +22,7 @@ WORKDIR /app
 
 # Install dependencies dengan versi pasti
 RUN pip install --no-cache-dir \
-    numpy==1.21.0 \
+    numpy==1.21.2 \
     pandas==1.5.3 \
     Flask==2.3.3 \
     gunicorn==20.1.0 \
