@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Peta Interaktif - AgriSensa</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f7f9fc; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+        }
+        h1 { 
+            color: #2e7d32; 
+            text-align: center; 
+        }
+        .map-container {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #4caf50;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #388e3c;
+        }
+        .info-panel {
+            background: #e3f2fd;
+            padding: 15px;
+            border-left: 5px solid #2196f3;
+            margin: 20px 0;
+        }
+        #coordinates-output {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+            min-height: 50px;
+        }
+        #area-result {
+            background: #f1f8e9;
+            padding: 15px;
+            border-left: 5px solid #689f38;
+            margin: 10px 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+    </style>
+    <!-- Load Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCa0kAvfLEzmMwKxfLx7hhyEWfruqG0VRs&libraries=places"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ Peta Interaktif - Hitung Luas Lahan</h1>
+        
+        <div class="info-panel">
+            <p><strong>Cara Penggunaan:</strong></p>
+            <ul>
+                <li>Klik pada peta untuk menambahkan titik</li>
+                <li>Klik "Hapus Titik" untuk menghapus titik terakhir</li>
+                <li>Klik "Hitung Luas" untuk menghitung luas area</li>
+                <li>Klik "Reset" untuk menghapus semua titik</li>
+            </ul>
+        </div>
+        
+        <div class="controls">
+            <button onclick="clearMarkers()">Hapus Titik</button>
+            <button onclick="calculateArea()">Hitung Luas</button>
+            <button onclick="resetAll()">Reset</button>
+        </div>
+        
+        <div id="coordinates-output">
+            <strong>Koordinat Titik:</strong><br>
+            <span id="coordinate-list">Belum ada titik</span>
+        </div>
+        
+        <div id="area-result">
+            Luas: <span id="area-value">0</span> Hektar
+        </div>
+        
+        <div id="map" class="map-container"></div>
+        
+        <div class="controls">
+            <button onclick="sendCoordinates()">Kirim Koordinat ke Sistem</button>
+        </div>
+        
+        <p><a href="/">← Kembali ke Home</a></p>
+    </div>
+
+    <script>
+        let map;
+        let markers = [];
+        let polygon;
+        let coordinates = [];
+
+        function initMap() {
+            // Inisialisasi peta di Indonesia
+            const indonesia = { lat: -2.5, lng: 118.0 };
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 5,
+                center: indonesia,
+                mapTypeId: 'hybrid'
+            });
+
+            // Tambahkan event click untuk menambahkan marker
+            map.addListener('click', function(event) {
+                addMarker(event.latLng);
+            });
+        }
+
+        function addMarker(location) {
+            // Hapus polygon sebelumnya
+            if (polygon) {
+                polygon.setMap(null);
+            }
+
+            // Tambahkan marker
+            const marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                draggable: true
+            });
+
+            markers.push(marker);
+            coordinates.push({
+                lat: location.lat(),
+                lng: location.lng()
+            });
+
+            updateCoordinateList();
+            updatePolygon();
+            
+            // Tambahkan event drag untuk marker
+            marker.addListener('dragend', function(event) {
+                const index = markers.indexOf(marker);
+                if (index !== -1) {
+                    coordinates[index] = {
+                        lat: event.latLng.lat(),
+                        lng: event.latLng.lng()
+                    };
+                    updateCoordinateList();
+                    updatePolygon();
+                }
+            });
+        }
+
+        function clearMarkers() {
+            // Hapus semua marker
+            for (let i = 0; i < markers.length; i++) {
+                markers[i].setMap(null);
+            }
+            markers = [];
+            coordinates = [];
+            
+            // Hapus polygon
+            if (polygon) {
+                polygon.setMap(null);
+            }
+            
+            updateCoordinateList();
+            updateAreaDisplay(0);
+        }
+
+        function resetAll() {
+            clearMarkers();
+            updateAreaDisplay(0);
+        }
+
+        function updateCoordinateList() {
+            const listElement = document.getElementById('coordinate-list');
+            if (coordinates.length === 0) {
+                listElement.innerHTML = "Belum ada titik";
+                return;
+            }
+            
+            let html = "";
+            coordinates.forEach((coord, index) => {
+                html += `Titik ${index + 1}: ${coord.lat.toFixed(6)}, ${coord.lng.toFixed(6)}<br>`;
+            });
+            listElement.innerHTML = html;
+        }
+
+        function updatePolygon() {
+            if (coordinates.length < 3) {
+                if (polygon) {
+                    polygon.setMap(null);
+                }
+                return;
+            }
+
+            // Hapus polygon lama
+            if (polygon) {
+                polygon.setMap(null);
+            }
+
+            // Buat polygon baru
+            const path = coordinates.map(coord => ({
+                lat: coord.lat,
+                lng: coord.lng
+            }));
+
+            polygon = new google.maps.Polygon({
+                paths: path,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35
+            });
+
+            polygon.setMap(map);
+        }
+
+        function calculateArea() {
+            if (coordinates.length < 3) {
+                alert("Minimal 3 titik diperlukan untuk menghitung luas");
+                return;
+            }
+
+            // Hitung luas menggunakan rumus shoelace
+            let area = 0;
+            const n = coordinates.length;
+            
+            for (let i = 0; i < n; i++) {
+                const j = (i + 1) % n;
+                area += coordinates[i].lng * coordinates[j].lat;
+                area -= coordinates[j].lng * coordinates[i].lat;
+            }
+            
+            area = Math.abs(area) / 2;
+            
+            // Konversi ke hektar (dengan estimasi)
+            const areaHectares = area * 111 * 111 * 0.0001; // Estimasi dasar
+            
+            updateAreaDisplay(areaHectares);
+        }
+
+        function updateAreaDisplay(area) {
+            document.getElementById('area-value').textContent = area.toFixed(2);
+        }
+
+        function sendCoordinates() {
+            if (coordinates.length < 3) {
+                alert("Minimal 3 titik diperlukan untuk mengirim koordinat");
+                return;
+            }
+
+            // Format koordinat untuk dikirim
+            const formattedCoords = coordinates.map(coord => 
+                `${coord.lat.toFixed(6)},${coord.lng.toFixed(6)}`
+            ).join(';');
+
+            // Kirim ke server (contoh dengan AJAX)
+            fetch('/process-map-coordinates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `coordinates=${encodeURIComponent(formattedCoords)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('Koordinat berhasil dikirim!');
+                console.log('Response:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal mengirim koordinat');
+            });
+        }
+
+        // Inisialisasi peta saat halaman dimuat
+        window.onload = function() {
+            initMap();
+        };
+    </script>
+</body>
+</html>
