@@ -1,10 +1,14 @@
+import os
+import sys
+import io
+
+# Set encoding untuk menghindari error Unicode
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import joblib
-import os
 from datetime import datetime
-import cv2
-import numpy as np
 
 # Import CV modules
 from cv_analysis.leaf_analyzer import LeafAnalyzer
@@ -19,11 +23,11 @@ predictor = None
 try:
     if os.path.exists(model_path):
         predictor = joblib.load(model_path)
-        print("✅ Model berhasil dimuat")
+        print("[SUCCESS] Model berhasil dimuat")
     else:
-        print("⚠️ File model tidak ditemukan")
+        print("[WARNING] File model tidak ditemukan")
 except Exception as e:
-    print(f"❌ Error memuat model: {e}")
+    print(f"[ERROR] Error memuat model: {e}")
     predictor = None
 
 # Inisialisasi CV analyzer
@@ -61,7 +65,7 @@ class HistoricalDataManager:
             conn.commit()
             conn.close()
         except Exception as e:
-            print(f"❌ Error membuat database: {e}")
+            print(f"[ERROR] Error membuat database: {e}")
     
     def save_prediction(self, data_dict):
         try:
@@ -88,7 +92,7 @@ class HistoricalDataManager:
             conn.commit()
             conn.close()
         except Exception as e:
-            print(f"❌ Error menyimpan data historis: {e}")
+            print(f"[ERROR] Error menyimpan data historis: {e}")
 
 # Inisialisasi database
 db_manager = HistoricalDataManager()
@@ -153,7 +157,7 @@ def predict():
                 hasil = prediction[0]
                 model_used = "Machine Learning (ML)"
             except Exception as e:
-                print(f"❌ Error prediksi ML: {e}")
+                print(f"[ERROR] Error prediksi ML: {e}")
                 hasil = 3.8 if pH < 5.5 else 4.8
         else:
             hasil = 3.8 if pH < 5.5 else 4.8
@@ -186,7 +190,7 @@ def predict():
             }
             db_manager.save_prediction(historical_data)
         except Exception as e:
-            print(f"❌ Error menyimpan historis: {e}")
+            print(f"[ERROR] Error menyimpan historis: {e}")
 
         return render_template('result.html',
                                ph=pH, n=n, p=p, k=k,
