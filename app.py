@@ -1,15 +1,23 @@
+import os
+import sys
+import io
+
+# Set encoding untuk menghindari error Unicode
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import joblib
-import os
 from datetime import datetime
-import cv2
-import numpy as np
 
 # Import CV modules
-from cv_analysis.leaf_analyzer import LeafAnalyzer
-from cv_analysis.disease_classifier import DiseaseClassifier
-from area_calculator import AreaCalculator
+try:
+    from cv_analysis.leaf_analyzer import LeafAnalyzer
+    from cv_analysis.disease_classifier import DiseaseClassifier
+    CV_MODULES_AVAILABLE = True
+except ImportError as e:
+    print(f"[WARNING] CV modules not available: {e}")
+    CV_MODULES_AVAILABLE = False
 
 app = Flask(__name__)
 
@@ -27,9 +35,18 @@ except Exception as e:
     print(f"[ERROR] Error memuat model: {e}")
     predictor = None
 
-# Inisialisasi CV analyzer
-leaf_analyzer = LeafAnalyzer()
-disease_classifier = DiseaseClassifier()
+# Inisialisasi CV analyzer jika tersedia
+leaf_analyzer = None
+disease_classifier = None
+
+if CV_MODULES_AVAILABLE:
+    try:
+        leaf_analyzer = LeafAnalyzer()
+        disease_classifier = DiseaseClassifier()
+        print("[SUCCESS] CV modules berhasil dimuat")
+    except Exception as e:
+        print(f"[ERROR] Error memuat CV modules: {e}")
+        CV_MODULES_AVAILABLE = False
 
 # Database handler
 class HistoricalDataManager:
@@ -126,6 +143,7 @@ def calculate_area_result():
             
             if len(coords) >= 3:
                 # Hitung luas
+                from area_calculator import AreaCalculator
                 area = AreaCalculator.calculate_polygon_area(coords)
                 area_hectare = round(area, 2)
             else:
@@ -137,6 +155,7 @@ def calculate_area_result():
             longitudes = [float(x.strip()) for x in longitudes_str.split(',')]
             
             if len(latitudes) >= 3 and len(longitudes) >= 3:
+                from area_calculator import AreaCalculator
                 area_hectare = AreaCalculator.calculate_approximate_area(latitudes, longitudes)
             else:
                 area_hectare = 0
@@ -164,6 +183,7 @@ def process_map_coordinates():
             
             if len(coords) >= 3:
                 # Hitung luas menggunakan fungsi yang sudah ada
+                from area_calculator import AreaCalculator
                 area = AreaCalculator.calculate_polygon_area(coords)
                 area_hectare = round(area, 2)
                 
@@ -193,7 +213,7 @@ def predict():
         leaf_analysis = {}
         disease_result = {}
         
-        if 'leaf_image' in request.files:
+        if CV_MODULES_AVAILABLE and 'leaf_image' in request.files:
             file = request.files['leaf_image']
             if file and file.filename:
                 # Simpan gambar
