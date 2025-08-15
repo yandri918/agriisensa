@@ -1,3 +1,12 @@
+# Di file app.py
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Ambil API key dari environment variable
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
 # Tambahkan route baru untuk peta interaktif
 @app.route('/map-calculator')
 def map_calculator():
