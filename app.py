@@ -1,4 +1,47 @@
-import os
+
+@app.route('/calculate-area-result', methods=['POST'])
+def calculate_area_result():
+    try:
+        # Ambil data dari form
+        coordinates = request.form.get('coordinates', '')
+        latitudes_str = request.form.get('latitudes', '')
+        longitudes_str = request.form.get('longitudes', '')
+        
+        # Proses koordinat
+        if coordinates:
+            # Parse koordinat dari string
+            coords = []
+            pairs = coordinates.split(';')
+            for pair in pairs:
+                if ',' in pair:
+                    lat, lon = pair.split(',')
+                    coords.append((float(lat.strip()), float(lon.strip())))
+            
+            if len(coords) >= 3:
+                # Hitung luas
+                from area_calculator import AreaCalculator
+                area = AreaCalculator.calculate_polygon_area(coords)
+                area_hectare = round(area, 2)
+            else:
+                area_hectare = 0
+                
+        elif latitudes_str and longitudes_str:
+            # Parse latitudes dan longitudes
+            latitudes = [float(x.strip()) for x in latitudes_str.split(',')]
+            longitudes = [float(x.strip()) for x in longitudes_str.split(',')]
+            
+            if len(latitudes) >= 3 and len(longitudes) >= 3:
+                from area_calculator import AreaCalculator
+                area_hectare = AreaCalculator.calculate_approximate_area(latitudes, longitudes)
+            else:
+                area_hectare = 0
+        else:
+            area_hectare = 0
+            
+        return render_template('area_result.html', area=area_hectare)
+        
+    except Exception as e:
+        return f"<h3>Error: {str(e)}</h3><br><a href='/calculate-area'>Kembali</a>"import os
 import sys
 import io
 
