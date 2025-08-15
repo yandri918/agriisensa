@@ -1,60 +1,15 @@
-# Di file app.py
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-# Ambil API key dari environment variable
-GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
-# Tambahkan route baru untuk peta interaktif
-@app.route('/map-calculator')
-def map_calculator():
-    return render_template('map_calculator.html')
-
-@app.route('/process-map-coordinates', methods=['POST'])
-def process_map_coordinates():
-    try:
-        coordinates_str = request.form.get('coordinates', '')
-        
-        if coordinates_str:
-            # Parse koordinat dari string
-            coords = []
-            pairs = coordinates_str.split(';')
-            for pair in pairs:
-                if ',' in pair:
-                    lat, lon = pair.split(',')
-                    coords.append((float(lat.strip()), float(lon.strip())))
-            
-            if len(coords) >= 3:
-                # Hitung luas menggunakan fungsi yang sudah ada
-                area = AreaCalculator.calculate_polygon_area(coords)
-                area_hectare = round(area, 2)
-                
-                # Simpan ke database atau kirim ke frontend
-                return f"Koordinat diterima. Luas: {area_hectare} hektar"
-            else:
-                return "Koordinat tidak cukup untuk menghitung luas"
-        else:
-            return "Tidak ada koordinat yang diterima"
-            
-    except Exception as e:
-        return f"Error: {str(e)}"
-import os
-import sys
-import io
-
-# Set encoding untuk menghindari error Unicode
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 import joblib
+import os
 from datetime import datetime
+import cv2
+import numpy as np
 
 # Import CV modules
 from cv_analysis.leaf_analyzer import LeafAnalyzer
 from cv_analysis.disease_classifier import DiseaseClassifier
+from area_calculator import AreaCalculator
 
 app = Flask(__name__)
 
@@ -142,6 +97,85 @@ db_manager = HistoricalDataManager()
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/calculate-area')
+def calculate_area():
+    return render_template('area_calculator.html')
+
+@app.route('/map-calculator')
+def map_calculator():
+    return render_template('map_calculator.html')
+
+@app.route('/calculate-area-result', methods=['POST'])
+def calculate_area_result():
+    try:
+        # Ambil data dari form
+        coordinates = request.form.get('coordinates', '')
+        latitudes_str = request.form.get('latitudes', '')
+        longitudes_str = request.form.get('longitudes', '')
+        
+        # Proses koordinat
+        if coordinates:
+            # Parse koordinat dari string
+            coords = []
+            pairs = coordinates.split(';')
+            for pair in pairs:
+                if ',' in pair:
+                    lat, lon = pair.split(',')
+                    coords.append((float(lat.strip()), float(lon.strip())))
+            
+            if len(coords) >= 3:
+                # Hitung luas
+                area = AreaCalculator.calculate_polygon_area(coords)
+                area_hectare = round(area, 2)
+            else:
+                area_hectare = 0
+                
+        elif latitudes_str and longitudes_str:
+            # Parse latitudes dan longitudes
+            latitudes = [float(x.strip()) for x in latitudes_str.split(',')]
+            longitudes = [float(x.strip()) for x in longitudes_str.split(',')]
+            
+            if len(latitudes) >= 3 and len(longitudes) >= 3:
+                area_hectare = AreaCalculator.calculate_approximate_area(latitudes, longitudes)
+            else:
+                area_hectare = 0
+        else:
+            area_hectare = 0
+            
+        return render_template('area_result.html', area=area_hectare)
+        
+    except Exception as e:
+        return f"<h3>Error: {str(e)}</h3><br><a href='/calculate-area'>Kembali</a>"
+
+@app.route('/process-map-coordinates', methods=['POST'])
+def process_map_coordinates():
+    try:
+        coordinates_str = request.form.get('coordinates', '')
+        
+        if coordinates_str:
+            # Parse koordinat dari string
+            coords = []
+            pairs = coordinates_str.split(';')
+            for pair in pairs:
+                if ',' in pair:
+                    lat, lon = pair.split(',')
+                    coords.append((float(lat.strip()), float(lon.strip())))
+            
+            if len(coords) >= 3:
+                # Hitung luas menggunakan fungsi yang sudah ada
+                area = AreaCalculator.calculate_polygon_area(coords)
+                area_hectare = round(area, 2)
+                
+                # Simpan ke database atau kirim ke frontend
+                return f"Koordinat diterima. Luas: {area_hectare} hektar"
+            else:
+                return "Koordinat tidak cukup untuk menghitung luas"
+        else:
+            return "Tidak ada koordinat yang diterima"
+            
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/predict', methods=['POST'])
 def predict():
