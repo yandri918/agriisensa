@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir \
     tensorflow==2.13.0 \
     keras==2.13.1
 
-# Copy kode aplikasi
+# Copy semua file aplikasi
 COPY . .
 
 EXPOSE 8080
