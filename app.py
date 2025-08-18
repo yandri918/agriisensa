@@ -1,18 +1,3 @@
-# Di bagian awal app.py
-try:
-    from cv_analysis.leaf_analyzer import LeafAnalyzer
-    from cv_analysis.disease_classifier import DiseaseClassifier
-    CV_MODULES_AVAILABLE = True
-    print("[INFO] CV modules berhasil dimuat")
-except ImportError as e:
-    print(f"[WARNING] CV modules tidak tersedia: {e}")
-    CV_MODULES_AVAILABLE = False
-# Di bagian awal app.py
-from cv_analysis.disease_classifier import DiseaseClassifier
-disease_classifier = DiseaseClassifier()
-
-# Pastikan path file model benar
-# File ini akan diakses oleh disease_classifier.py
 import os
 import sys
 import io
