@@ -3,64 +3,132 @@
 <head>
     <title>Hasil Prediksi - AgriSensa</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; background: #e8f5e9; }
-        .container { max-width: 700px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #2e7d32; }
-        .result { background: #f1f8e9; padding: 15px; border-left: 5px solid #689f38; margin: 20px 0; }
-        .rekomendasi { background: #fff3e0; padding: 15px; border-left: 5px solid #ef6c00; }
-        .analysis { background: #e3f2fd; padding: 15px; border-left: 5px solid #2196f3; }
-        a { color: #1b5e20; text-decoration: none; font-weight: bold; }
-        a:hover { text-decoration: underline; }
-        .image-preview { max-width: 200px; margin: 10px 0; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+            color: white;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px; 
+            border-radius: 15px; 
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        h1 { 
+            text-align: center; 
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .result-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 5px solid #FFEB3B;
+        }
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status-red { background: rgba(244, 67, 54, 0.3); }
+        .status-yellow { background: rgba(255, 152, 0, 0.3); }
+        .status-green { background: rgba(76, 175, 80, 0.3); }
+        .recommendation {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        .btn {
+            background: #FF9800;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 Hasil Prediksi</h1>
-        <p><strong>Input:</strong> pH={{ ph }}, N={{ n }}, P={{ p }}, K={{ k }}</p>
-
-        <div class="result">
-            <p><strong>📈 Prediksi Hasil Panen:</strong> {{ hasil }} kg</p>
-            <p><strong>🌱 Status Tanah:</strong> {{ status }}</p>
-            <p><strong>🌤️ Cuaca:</strong> {{ cuaca }}</p>
-            <p><strong>🌧️ Musim:</strong> {{ musim }}</p>
-            <p><strong>🌱 Jenis Tanaman:</strong> {{ jenis_tanaman }}</p>
-            <p><strong>🤖 Model:</strong> {{ model_used }}</p>
+        <h1>📊 Hasil Prediksi AgriSensa</h1>
+        
+        <div class="result-card">
+            <h2>Hasil Panen</h2>
+            <p><strong>Estimasi Hasil:</strong> {{ hasil }} ton/ha</p>
+            <p><strong>Model Digunakan:</strong> {{ model_used }}</p>
+            <p><strong>Tanggal:</strong> {{ tanggal }}</p>
         </div>
-
+        
+        <div class="status {{ status|lower|replace(' ', '-') }}">
+            <strong>Status Tanaman:</strong> {{ status }}
+        </div>
+        
+        <div class="recommendation">
+            <h3>Rekomendasi:</h3>
+            <ul>
+                {% for item in rekomendasi %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
         {% if leaf_analysis %}
-        <div class="analysis">
-            <h3>🔍 Analisis Daun</h3>
-            <p><strong>Warna Daun:</strong> {{ leaf_analysis.color_analysis }}</p>
-            {% if leaf_analysis.image_path %}
-            <p><strong>Gambar Daun:</strong></p>
-            <img src="/uploads/{{ leaf_analysis.image_path }}" alt="Gambar Daun" class="image-preview">
+        <div class="result-card">
+            <h3>Analisis Warna Daun</h3>
+            <p><strong>Status:</strong> {{ leaf_analysis.color_analysis.status }}</p>
+            {% if leaf_analysis.color_analysis.average_rgb %}
+            <p><strong>Rata-rata RGB:</strong> 
+                RGB({{ leaf_analysis.color_analysis.average_rgb[0] }}, 
+                {{ leaf_analysis.color_analysis.average_rgb[1] }}, 
+                {{ leaf_analysis.color_analysis.average_rgb[2] }})</p>
             {% endif %}
         </div>
         {% endif %}
-
+        
         {% if disease_result %}
-        <div class="analysis">
-            <h3>🩺 Deteksi Penyakit</h3>
+        <div class="result-card">
+            <h3>Deteksi Penyakit</h3>
             {% if disease_result.error %}
             <p><strong>Error:</strong> {{ disease_result.error }}</p>
             {% else %}
-            <p><strong>Penyakit Terdeteksi:</strong> {{ disease_result.disease }}</p>
+            <p><strong>Penyakit:</strong> {{ disease_result.disease }}</p>
             <p><strong>Confidence:</strong> {{ "%.2f"|format(disease_result.confidence * 100) }}%</p>
             {% endif %}
         </div>
         {% endif %}
-
-        <div class="rekomendasi">
-            <p><strong>💡 Rekomendasi:</strong></p>
-            <ul>
-                {% for rec in rekomendasi %}
-                <li>{{ rec }}</li>
-                {% endfor %}
-            </ul>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/" class="btn">Hitung Lagi</a>
         </div>
-
-        <p><a href="/">← Kembali ke Form</a></p>
+        
+        <div class="footer">
+            <p>Sistem Pertanian Cerdas untuk Petani Indonesia</p>
+        </div>
     </div>
 </body>
 </html>
