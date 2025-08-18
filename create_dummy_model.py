@@ -1,69 +1,27 @@
-# create_dummy_model.py (simpan di direktori utama proyek)
+# create_dummy_model.py
 import tensorflow as tf
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
 import numpy as np
-import os
 
-def create_dummy_disease_model():
-    """
-    Membuat model dummy untuk deteksi penyakit daun
-    """
-    # Load base model (MobileNetV2)
-    base_model = MobileNetV2(
-        weights='imagenet',
-        include_top=False,
-        input_shape=(224, 224, 3)
-    )
-    
-    # Freeze base model layers
+def create_dummy_model():
+    # Create a simple dummy model
+    base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
     base_model.trainable = False
     
-    # Add custom classification layers
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Dropout(0.2)(x)
-    predictions = Dense(5, activation='softmax')(x)  # 5 kelas penyakit
+    predictions = Dense(5, activation='softmax')(x)
     
     model = Model(inputs=base_model.input, outputs=predictions)
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     
-    # Compile model
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-        loss='categorical_crossentropy',
-        metrics=['accuracy']
-    )
-    
-    # Simpan model
+    # Save the model
     model.save('models/leaf_disease_model.h5')
-    print("✅ Model dummy deteksi penyakit daun berhasil dibuat")
-    print("📁 File disimpan di: models/leaf_disease_model.h5")
-    
-    return model
-
-def create_model_with_dummy_data():
-    """
-    Membuat model dengan data dummy untuk testing
-    """
-    # Buat model
-    model = create_dummy_disease_model()
-    
-    # Buat data dummy untuk testing
-    dummy_x = np.random.random((1, 224, 224, 3))
-    dummy_y = np.random.random((1, 5))
-    
-    # Latih model dengan dummy data
-    model.fit(dummy_x, dummy_y, epochs=1, verbose=0)
-    
-    print("✅ Model dummy berhasil dilatih dengan data dummy")
+    print("✅ Model dummy berhasil dibuat")
     return model
 
 if __name__ == "__main__":
-    # Buat model dummy
-    model = create_dummy_disease_model()
-    
-    # Opsional: latih dengan data dummy
-    # model = create_model_with_dummy_data()
-    
-    print("🔧 Model siap digunakan untuk deteksi penyakit daun")
+    create_dummy_model()
