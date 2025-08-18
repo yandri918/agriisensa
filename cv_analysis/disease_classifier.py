@@ -1,4 +1,3 @@
-# cv_analysis/disease_classifier.py
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
@@ -18,47 +17,35 @@ class DiseaseClassifier:
         """Muat model pre-trained"""
         try:
             if os.path.exists(self.model_path):
-                print(f"[INFO] Mencoba memuat model dari: {self.model_path}")
                 self.model = tf.keras.models.load_model(self.model_path)
                 print("[SUCCESS] Model penyakit daun berhasil dimuat")
             else:
-                print("[WARNING] File model tidak ditemukan, membuat model dummy")
+                print("[WARNING] File model tidak ditemukan")
+                # Buat model dummy jika tidak ada
                 self.create_dummy_model()
         except Exception as e:
             print(f"[ERROR] Error memuat model: {e}")
-            print("[INFO] Membuat model dummy...")
             self.create_dummy_model()
 
     def create_dummy_model(self):
         """Buat model dummy untuk testing"""
-        try:
-            print("🔧 Membuat model dummy...")
-            
-            # Load base model
-            base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-            base_model.trainable = False
-            
-            # Tambahkan layer kustom
-            x = base_model.output
-            x = GlobalAveragePooling2D()(x)
-            x = tf.keras.layers.Dropout(0.2)(x)
-            predictions = Dense(5, activation='softmax')(x)
-            
-            self.model = Model(inputs=base_model.input, outputs=predictions)
-            
-            # Compile model
-            self.model.compile(
-                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                loss='categorical_crossentropy',
-                metrics=['accuracy']
-            )
-            
-            # Simpan model dummy
-            self.model.save(self.model_path)
-            print("[INFO] Model dummy penyakit daun disimpan")
-            
-        except Exception as e:
-            print(f"[ERROR] Gagal membuat model dummy: {e}")
+        print("🔧 Membuat model dummy...")
+        
+        # Load base model
+        base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        base_model.trainable = False
+        
+        # Tambahkan layer kustom
+        x = base_model.output
+        x = GlobalAveragePooling2D()(x)
+        x = tf.keras.layers.Dropout(0.2)(x)
+        predictions = Dense(5, activation='softmax')(x)
+        
+        self.model = Model(inputs=base_model.input, outputs=predictions)
+        
+        # Simpan model dummy
+        self.model.save(self.model_path)
+        print("[INFO] Model dummy penyakit daun disimpan")
 
     def predict_disease(self, image_path):
         """Prediksi penyakit daun"""
