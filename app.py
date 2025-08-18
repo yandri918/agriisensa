@@ -1,4 +1,12 @@
 # Di bagian awal app.py
+try:
+    from cv_analysis.leaf_analyzer import LeafAnalyzer
+    from cv_analysis.disease_classifier import DiseaseClassifier
+    CV_MODULES_AVAILABLE = True
+except ImportError as e:
+    print(f"[WARNING] CV modules not available: {e}")
+    CV_MODULES_AVAILABLE = False
+# Di bagian awal app.py
 from cv_analysis.disease_classifier import DiseaseClassifier
 disease_classifier = DiseaseClassifier()
 
