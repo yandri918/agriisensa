@@ -1,3 +1,9 @@
+# Di bagian awal app.py
+from cv_analysis.disease_classifier import DiseaseClassifier
+disease_classifier = DiseaseClassifier()
+
+# Pastikan path file model benar
+# File ini akan diakses oleh disease_classifier.py
 import os
 import sys
 import io
