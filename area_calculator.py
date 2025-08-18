@@ -48,3 +48,21 @@ class AreaCalculator:
         area_hectare = area_m2 / 10000  # Konversi ke hektar
         
         return round(area_hectare, 2)
+    
+    @staticmethod
+    def calculate_cost_per_area(total_cost, area_hectare):
+        """
+        Hitung biaya produksi per hektar
+        """
+        if area_hectare <= 0:
+            return 0
+        return round(total_cost / area_hectare, 2)
+    
+    @staticmethod
+    def estimate_yield_per_area(estimated_yield_kg, area_hectare):
+        """
+        Estimasi hasil panen per hektar
+        """
+        if area_hectare <= 0:
+            return 0
+        return round(estimated_yield_kg / area_hectare, 2)
