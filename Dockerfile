@@ -33,8 +33,11 @@ RUN pip install --no-cache-dir \
     scikit-learn==1.3.0 \
     Pillow==10.0.1
 
-# Copy kode aplikasi
+# Copy semua file
 COPY . .
+
+# Jalankan setup model saat build
+RUN python setup_models.py
 
 EXPOSE 8080
 
